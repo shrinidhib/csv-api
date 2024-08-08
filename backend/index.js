@@ -1,5 +1,6 @@
 import express from "express";
 import { connectDB } from "./database/mongoConnection.js";
+import { MongoClient, GridFSBucket } from 'mongodb';
 import dotenv from "dotenv"
 import multer from "multer";
 import csv from "csv-parser";
@@ -7,49 +8,87 @@ import fs from "fs";
 import path from "path";
 import { Trade } from "./database/models/Trade.js";
 import cors from "cors"
+import { Readable } from 'stream';
+
 dotenv.config()
 const app = express()
 app.use(cors())
-const upload = multer({ dest: 'uploads/' });
+
 
 app.use(express.json())
+
+
+
 //to upload csv data to mongodb database
-app.post('/upload', upload.single('file'), async(req, res) => {
-  const filePath = path.join(process.cwd(), req.file.path);
-  try{
-    await connectDB();
-    let trades = [];
-  fs.createReadStream(filePath)
-    .pipe(csv())
-    .on('data', (row) => {
-        //console.log(row)
-      const [base_coin, quote_coin] = row.Market.split('/');
-      const trade = new Trade({
-        utc_time: new Date(row.UTC_Time),
-        operation: row.Operation.toLowerCase(),
-        base_coin,
-        quote_coin,
-        buy_sell_amount: parseFloat(row['Buy/Sell Amount']),
-        price: parseFloat(row.Price),
-      });
-      trades.push(trade);
-    })
-    .on('end', () => {
-      Trade.insertMany(trades)
-        .then(() => {
-          fs.unlinkSync(filePath); 
-          res.status(200).json({ message: 'CSV data successfully uploaded and stored in the database' });
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+
+app.post('/upload', upload.single('file'), async (req, res) => {
+  try {
+    connectDB()
+    const uri = process.env.MONGO_URI; 
+    const client = new MongoClient(uri);
+
+    await client.connect()
+    const db = client.db('csv-uploads')
+    const gfs = new GridFSBucket(db, {bucketName: 'uploads'})
+    const fileBuffer = req.file.buffer;
+    
+    // Create a readable stream from the buffer
+    const readableStream = new Readable();
+    readableStream._read = () => {}; // _read is required but you can noop it
+    readableStream.push(fileBuffer);
+    readableStream.push(null);
+
+    // Upload the file to GridFS
+    const uploadStream = gfs.openUploadStream(req.file.originalname, {
+      contentType: req.file.mimetype
+    });
+
+    readableStream.pipe(uploadStream);
+
+    uploadStream.on('finish', () => {
+      const fileId = uploadStream.id;
+      const fileStream = gfs.openDownloadStream(fileId);
+      const trades = [];
+
+      fileStream.pipe(csv())
+        .on('data', (row) => {
+          const [base_coin, quote_coin] = row.Market.split('/');
+          const trade = new Trade({
+            utc_time: new Date(row.UTC_Time),
+            operation: row.Operation.toLowerCase(),
+            base_coin,
+            quote_coin,
+            buy_sell_amount: parseFloat(row['Buy/Sell Amount']),
+            price: parseFloat(row.Price),
+          });
+          trades.push(trade);
         })
-        .catch((err) => {
+        .on('end', () => {
+          Trade.insertMany(trades)
+            .then(() => {
+              res.status(200).json({ message: 'CSV data successfully uploaded and stored in the database' });
+            })
+            .catch((err) => {
+              console.error(err);
+              res.status(500).json({ error: 'Error storing data' });
+            });
+        })
+        .on('error', (err) => {
           console.error(err);
-          res.status(500).json({ error: 'Error storing data' });
+          res.status(500).json({ error: 'Error reading file' });
         });
     });
+
+    uploadStream.on('error', (err) => {
+      console.error(err);
+      res.status(500).json({ error: 'Error uploading file' });
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: 'Error processing request' });
   }
-  catch(e){
-    res.status(500).json({message: "Error in DB Connection"})
-  }
-  
 });
 
 //fetch all trades for display
