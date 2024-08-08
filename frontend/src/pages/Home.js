@@ -16,8 +16,15 @@ const Home = () => {
       const data = await response.json();
       console.log(data)
       if (response.ok) {
+        if (data.trades == []){
+            setError('No Trade Data Available right now!')
+        }
+        else{
+            setError('');
+        }
         setTrades(data.trades);
-        setError('');
+        
+        
       } else {
         setError(data.message || 'Failed to fetch trades');
       }
@@ -28,6 +35,10 @@ const Home = () => {
 
   // Fetch balance at a specific timestamp
   const fetchBalance = async () => {
+    if (timestamp==''){
+        alert('Please specify timestamp!')
+        return
+    }
     try {
       const response = await fetch(`${process.env.REACT_APP_SERVER}/balance`, {
         method: 'POST',
@@ -72,69 +83,78 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <h1 className="text-3xl font-bold mb-6 text-center">API Tester</h1>
-
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Fetch All Trades</h2>
+    <div className="min-h-screen bg-gradient-to-r from-blue-50 to-purple-50 p-8">
+      <h1 className="text-4xl font-extrabold mb-8 text-center text-blue-800">API Tester</h1>
+  
+      <div className="mb-10">
+        <h2 className="text-2xl font-semibold mb-4 text-blue-700">Fetch All Trades</h2>
         <button
           onClick={fetchTrades}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          className="bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 transition duration-200"
         >
           Get All Trades
         </button>
-        {error && <p className="text-red-500 mt-2">{error}</p>}
-        <ul className="mt-4">
+        {error && <p className="text-red-600 mt-4">{error}</p>}
+        <ul className="mt-6 space-y-4">
           {trades.map((trade, index) => (
-            <li key={index} className="bg-white p-2 mb-2 rounded shadow">
-              {trade.base_coin}/{trade.quote_coin}: {trade.buy_sell_amount} @ {trade.price} ({trade.operation}) on {new Date(trade.utc_time).toLocaleString()}
+            <li key={index} className="bg-white p-4 rounded-lg shadow hover:shadow-lg transition duration-200">
+              <div className="text-lg font-medium text-gray-700">
+                {trade.base_coin}/{trade.quote_coin}
+              </div>
+              <div className="text-sm text-gray-500">
+                {trade.buy_sell_amount} @ {trade.price} ({trade.operation})
+              </div>
+              <div className="text-xs text-gray-400">
+                {new Date(trade.utc_time).toLocaleString()}
+              </div>
             </li>
           ))}
         </ul>
       </div>
-
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Get Balance at Timestamp</h2>
+  
+      <div className="mb-10">
+        <h2 className="text-2xl font-semibold mb-4 text-green-700">Get Balance at Timestamp</h2>
         <input
           type="datetime-local"
           value={timestamp}
           onChange={(e) => setTimestamp(e.target.value)}
-          className="border p-2 rounded mr-2"
+          className="border-2 border-green-500 p-3 rounded-lg mr-4 focus:border-green-600 focus:ring-1 focus:ring-green-600"
         />
         <button
           onClick={fetchBalance}
-          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+          className="bg-green-600 text-white px-6 py-3 rounded-lg shadow hover:bg-green-700 transition duration-200"
         >
           Get Balance
         </button>
         {balance && (
-          <div className="mt-4">
-            <h3 className="text-lg font-semibold">Balance:</h3>
-            <pre>{JSON.stringify(balance, null, 2)}</pre>
+          <div className="mt-6 bg-white p-4 rounded-lg shadow">
+            <h3 className="text-lg font-semibold text-gray-700">Balance:</h3>
+            <pre className="text-gray-600 mt-2">{JSON.stringify(balance, null, 2)}</pre>
           </div>
         )}
       </div>
-
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Upload CSV File</h2>
-        <form onSubmit={handleFileUpload}>
+  
+      <div className="mb-10">
+        <h2 className="text-2xl font-semibold mb-4 text-purple-700">Upload CSV File</h2>
+        <form onSubmit={handleFileUpload} className="flex items-center">
           <input
             type="file"
             accept=".csv"
             onChange={(e) => setCsvFile(e.target.files[0])}
-            className="border p-2 rounded mr-2"
+            className="border-2 border-purple-500 p-3 rounded-lg mr-4 focus:border-purple-600 focus:ring-1 focus:ring-purple-600"
           />
           <button
             type="submit"
-            className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
+            className="bg-purple-600 text-white px-6 py-3 rounded-lg shadow hover:bg-purple-700 transition duration-200"
           >
             Upload CSV
           </button>
         </form>
-        {uploadMessage && <p className="text-green-500 mt-2">{uploadMessage}</p>}
+        {uploadMessage && <p className="text-green-600 mt-4">{uploadMessage}</p>}
       </div>
     </div>
   );
+  
 };
 
 export default Home;
