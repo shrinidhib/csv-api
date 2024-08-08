@@ -6,9 +6,10 @@ import csv from "csv-parser";
 import fs from "fs";
 import path from "path";
 import { Trade } from "./database/models/Trade.js";
-import { error } from "console";
+import cors from "cors"
 dotenv.config()
 const app = express()
+app.use(cors())
 const upload = multer({ dest: 'uploads/' });
 
 app.use(express.json())
