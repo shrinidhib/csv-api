@@ -18,8 +18,8 @@ The backend is built with Node.js, Express, and MongoDB. It includes the followi
 1. **Clone the Repository**
 
    ```bash
-   git clone https://github.com/yourusername/koinx-api.git
-   cd koinx-api
+   git clone https://github.com/shrinidhib/csv-api.git
+   cd backend
    ```
 
 2. **Install Dependencies**
@@ -34,7 +34,7 @@ The backend is built with Node.js, Express, and MongoDB. It includes the followi
 
    ```env
    MONGO_URI=your_mongodb_connection_string
-   PORT=5000
+   PORT=your_port
    ```
 
 4. **Start the Server**
@@ -74,8 +74,8 @@ The frontend is built with React and styled using Tailwind CSS. It provides inte
 1. **Clone the Repository**
 
    ```bash
-   git clone https://github.com/yourusername/koinx-frontend.git
-   cd koinx-frontend
+   git clone https://github.com/shrinidhib/csv-api.git
+   cd frontend
    ```
 
 2. **Install Dependencies**
@@ -89,7 +89,7 @@ The frontend is built with React and styled using Tailwind CSS. It provides inte
    Create a `.env` file in the root directory and add the following environment variables:
 
    ```env
-   REACT_APP_SERVER=https://koinx-api-backend.vercel.app/
+   REACT_APP_SERVER=your_backend_url
    ```
 
 4. **Start the Development Server**
