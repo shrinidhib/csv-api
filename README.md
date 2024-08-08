@@ -106,6 +106,6 @@ The frontend is built with React and styled using Tailwind CSS. It provides inte
 
 ### Deployment
 
-Frontend API Tested -  https://koinx-api-frontend.vercel.app/
+Frontend API Tester -  https://koinx-api-frontend.vercel.app/
 Backend - https://koinx-api-backend.vercel.app/
 
